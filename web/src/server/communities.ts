@@ -1,4 +1,5 @@
 import { and, count, desc, eq, ilike } from "drizzle-orm";
+import { notFound } from "next/navigation";
 import { db } from "@/db";
 import { user } from "@/db/schema/auth";
 import { community, communityMember } from "@/db/schema/communities";
@@ -52,6 +53,20 @@ export async function getCommunityBySlug(slug: string) {
 
 export async function getCommunityByInviteCode(code: string) {
   return db.query.community.findFirst({ where: eq(community.inviteCode, code) });
+}
+
+/** Loads a community the viewer may see; 404s if missing or private to them. */
+export async function getCommunityForViewer(slug: string, userId: string) {
+  const found = await getCommunityBySlug(slug);
+  if (!found) notFound();
+  const membership = await getMembership(found.id, userId);
+  if (found.visibility === "private" && !membership) notFound();
+  return { community: found, role: membership?.role };
+}
+
+export async function countMembers(communityId: string) {
+  const [row] = await db.select({ n: count() }).from(communityMember).where(eq(communityMember.communityId, communityId));
+  return row.n;
 }
 
 export async function getMembership(communityId: string, userId: string) {

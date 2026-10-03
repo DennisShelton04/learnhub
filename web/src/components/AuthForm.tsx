@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useState, useSyncExternalStore } from "react";
 import { authClient } from "@/lib/auth-client";
 import { safeNext } from "@/lib/safe-next";
 
@@ -12,6 +12,12 @@ export function AuthForm({ mode, next }: { mode: Mode; next?: string }) {
   const router = useRouter();
   const [error, setError] = useState<string | null>(null);
   const [pending, setPending] = useState(false);
+  // False during server render and until hydration, so the form can't be submitted natively.
+  const hydrated = useSyncExternalStore(
+    () => () => {},
+    () => true,
+    () => false,
+  );
 
   async function onSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -38,8 +44,9 @@ export function AuthForm({ mode, next }: { mode: Mode; next?: string }) {
   const isSignup = mode === "signup";
   const otherHref = (isSignup ? "/login" : "/signup") + (next ? `?next=${encodeURIComponent(next)}` : "");
 
+  // method="post": if submitted before JS loads, never put credentials in the URL.
   return (
-    <form onSubmit={onSubmit} className="flex w-full flex-col gap-4">
+    <form method="post" onSubmit={onSubmit} className="flex w-full flex-col gap-4">
       <h1 className="text-2xl font-semibold tracking-tight">
         {isSignup ? "Create your account" : "Welcome back"}
       </h1>
@@ -62,7 +69,7 @@ export function AuthForm({ mode, next }: { mode: Mode; next?: string }) {
 
       <button
         type="submit"
-        disabled={pending}
+        disabled={pending || !hydrated}
         className="rounded-md bg-zinc-900 px-4 py-2 font-medium text-white hover:bg-zinc-700 disabled:opacity-60 dark:bg-zinc-100 dark:text-zinc-900 dark:hover:bg-zinc-300"
       >
         {pending ? "Please wait…" : isSignup ? "Sign up" : "Log in"}

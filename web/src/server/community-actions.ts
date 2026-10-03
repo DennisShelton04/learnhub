@@ -74,7 +74,7 @@ export async function joinCommunity(communityId: string) {
   if (!target || target.visibility !== "public") notFound();
 
   await db.insert(communityMember).values({ communityId, userId: user.id }).onConflictDoNothing();
-  revalidatePath(`/c/${target.slug}`);
+  revalidatePath(`/c/${target.slug}`, "layout");
 }
 
 export async function joinByInvite(inviteCode: string) {
@@ -128,5 +128,5 @@ export async function removeMember(communityId: string, memberId: string) {
 
 async function revalidateCommunity(communityId: string) {
   const c = await db.query.community.findFirst({ where: eq(community.id, communityId), columns: { slug: true } });
-  if (c) revalidatePath(`/c/${c.slug}`);
+  if (c) revalidatePath(`/c/${c.slug}`, "layout");
 }

@@ -15,6 +15,20 @@
       "when": 1790994644471,
       "tag": "0001_communities",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1790996257566,
+      "tag": "0002_posts",
+      "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1790996661343,
+      "tag": "0003_timestamps_with_timezone",
+      "breakpoints": true
     }
   ]
 }

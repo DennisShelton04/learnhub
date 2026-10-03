@@ -17,8 +17,8 @@ export const community = pgTable("community", {
   createdBy: text("created_by")
     .notNull()
     .references(() => user.id, { onDelete: "cascade" }),
-  createdAt: timestamp("created_at").defaultNow().notNull(),
-  updatedAt: timestamp("updated_at")
+  createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+  updatedAt: timestamp("updated_at", { withTimezone: true })
     .defaultNow()
     .$onUpdate(() => new Date())
     .notNull(),
@@ -34,7 +34,7 @@ export const communityMember = pgTable(
       .notNull()
       .references(() => user.id, { onDelete: "cascade" }),
     role: memberRole("role").notNull().default("member"),
-    joinedAt: timestamp("joined_at").defaultNow().notNull(),
+    joinedAt: timestamp("joined_at", { withTimezone: true }).defaultNow().notNull(),
   },
   (table) => [
     primaryKey({ columns: [table.communityId, table.userId] }),
