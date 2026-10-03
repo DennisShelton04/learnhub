@@ -4,8 +4,7 @@ Community learning platform: communities share videos and articles, discuss them
 
 ```
 learnhub/
-├── frontend/   Next.js 16 (TypeScript, Tailwind) — web + PWA
-└── backend/    Spring Boot 4 (Java 21+, Maven) — REST API + WebSocket
+└── web/    Next.js 16 full-stack app (TypeScript, Tailwind, Drizzle ORM, Better Auth)
 ```
 
 Runs fully locally, no Docker required.
@@ -13,10 +12,9 @@ Runs fully locally, no Docker required.
 ## Prerequisites (macOS)
 
 ```bash
-brew install postgresql@14 redis maven
+brew install postgresql@14
 nvm install 22            # Node 22 (see .nvmrc)
 brew services start postgresql@14
-brew services start redis
 ```
 
 One-time database setup:
@@ -29,29 +27,27 @@ createdb -O learnhub learnhub
 
 ## Run
 
-Backend (http://localhost:8080):
-
 ```bash
-cd backend
-./mvnw spring-boot:run
-```
-
-Frontend (http://localhost:3000):
-
-```bash
-cd frontend
+cd web
 nvm use
 npm install
+cp .env.example .env.local   # then set BETTER_AUTH_SECRET (openssl rand -base64 32)
+npm run db:migrate
 npm run dev
 ```
 
-The home page shows a "Backend connected" badge when both are running.
+Open http://localhost:3000.
 
-## Configuration
+## Database
 
-Backend settings are in `backend/src/main/resources/application.yml` and can be overridden with env vars:
-`DB_URL`, `DB_USERNAME`, `DB_PASSWORD`, `REDIS_HOST`, `REDIS_PORT`, `CORS_ALLOWED_ORIGINS`, `STORAGE_LOCAL_DIR`.
+- Schema lives in `web/src/db/schema/` (Drizzle).
+- After changing the schema: `npm run db:generate` (creates a migration in `web/drizzle/`), then `npm run db:migrate`.
+- `npm run db:studio` opens a browser UI to inspect data.
 
-Frontend: copy `frontend/.env.example` to `frontend/.env.local` (`NEXT_PUBLIC_API_URL`).
+## Auth
 
-Database schema changes go in `backend/src/main/resources/db/migration` as Flyway migrations (`V1__description.sql`, ...).
+Email + password via [Better Auth](https://www.better-auth.com). Sessions are stored in Postgres and sent as an httpOnly cookie.
+
+- Server: `web/src/lib/auth.ts`, API mounted at `/api/auth/*`
+- Client: `web/src/lib/auth-client.ts`
+- Protected pages check the session on the server (`auth.api.getSession`); `web/src/proxy.ts` only does fast redirects.
