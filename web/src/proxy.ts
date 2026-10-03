@@ -5,11 +5,13 @@ import { NextResponse, type NextRequest } from "next/server";
 // Pages still verify the session on the server before showing data.
 export function proxy(request: NextRequest) {
   const hasSession = Boolean(getSessionCookie(request));
-  const { pathname } = request.nextUrl;
+  const { pathname, search } = request.nextUrl;
   const isAuthPage = pathname === "/login" || pathname === "/signup";
 
   if (!hasSession && !isAuthPage) {
-    return NextResponse.redirect(new URL("/login", request.url));
+    const login = new URL("/login", request.url);
+    login.searchParams.set("next", pathname + search);
+    return NextResponse.redirect(login);
   }
   if (hasSession && isAuthPage) {
     return NextResponse.redirect(new URL("/dashboard", request.url));
@@ -18,5 +20,5 @@ export function proxy(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ["/dashboard/:path*", "/login", "/signup"],
+  matcher: ["/dashboard/:path*", "/communities/:path*", "/c/:path*", "/join/:path*", "/login", "/signup"],
 };

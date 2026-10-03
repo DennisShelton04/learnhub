@@ -4,10 +4,11 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { authClient } from "@/lib/auth-client";
+import { safeNext } from "@/lib/safe-next";
 
 type Mode = "login" | "signup";
 
-export function AuthForm({ mode }: { mode: Mode }) {
+export function AuthForm({ mode, next }: { mode: Mode; next?: string }) {
   const router = useRouter();
   const [error, setError] = useState<string | null>(null);
   const [pending, setPending] = useState(false);
@@ -30,11 +31,12 @@ export function AuthForm({ mode }: { mode: Mode }) {
       setError(error.message ?? "Something went wrong. Please try again.");
       return;
     }
-    router.push("/dashboard");
+    router.push(safeNext(next));
     router.refresh();
   }
 
   const isSignup = mode === "signup";
+  const otherHref = (isSignup ? "/login" : "/signup") + (next ? `?next=${encodeURIComponent(next)}` : "");
 
   return (
     <form onSubmit={onSubmit} className="flex w-full flex-col gap-4">
@@ -68,7 +70,7 @@ export function AuthForm({ mode }: { mode: Mode }) {
 
       <p className="text-sm text-zinc-600 dark:text-zinc-400">
         {isSignup ? "Already have an account? " : "New to LearnHub? "}
-        <Link href={isSignup ? "/login" : "/signup"} className="font-medium underline">
+        <Link href={otherHref} className="font-medium underline">
           {isSignup ? "Log in" : "Create an account"}
         </Link>
       </p>
