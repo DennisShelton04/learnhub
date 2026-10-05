@@ -278,6 +278,7 @@ copy `.env.example` to `.env.local` and set `BETTER_AUTH_SECRET` → `npm run db
 | `npm run db:studio` | Browse the database |
 | `npm run share` | Share this machine's app via a Cloudflare quick tunnel |
 | `npm run reset-password -- email` | Admin: set a new password (hidden prompt) |
+| `npm run test:e2e` | Build and run all browser end-to-end tests (section 6) |
 
 ### Environment variables
 
@@ -323,37 +324,52 @@ Edit `src/db/schema/*.ts` → `npm run db:generate -- --name short_description` 
 1. `npx tsc --noEmit` — no type errors
 2. `npm run lint` — no errors or warnings
 3. `npm run build` — production build succeeds
-4. Browser end-to-end tests pass (multi-user where relevant)
+4. `npm run test:e2e` passes (add or update a suite for the feature)
 5. Screenshots checked on desktop and phone width, light and dark
 6. Manually tested by a person, then committed
 
-### How the end-to-end tests worked
-Each feature was verified with scripted browser tests using `playwright-core` driving the installed Google
-Chrome (headless), against a production build (`npm run build && npm start`):
+### End-to-end tests (`web/tests/e2e/`)
+Scripted browser tests using `playwright-core` driving the installed Google Chrome (headless) against a
+production build.
+
+```bash
+cd web
+npm run test:e2e                        # build, start a test server on :3100, run every suite, clean up
+npm run test:e2e -- quizzes battles     # only suites whose file name contains these words
+E2E_HEADED=1 npm run test:e2e -- posts  # watch the browser
+E2E_BASE_URL=http://localhost:3000 node tests/e2e/run.mjs   # against an already-running server
+```
+
+- `helpers.mjs` — shared helpers (sign up, create community, share note, join, `check`/`summary`).
+- `run.mjs` — starts the test server, runs suites one by one, prints a summary, exits non-zero on failure.
+- Screenshots go to `tests/e2e/output/` (git-ignored).
+- Tests use the local database. Test accounts use the `@e2e.learnhub.test` domain and are deleted at the
+  end together with everything they created and any voice files no message uses.
+
+What they cover:
 
 - **Multiple users at once** in separate browser contexts (e.g. host + two players for battles).
 - **Fake microphone** (`--use-fake-device-for-media-stream`) to test voice notes and WebRTC voice for real.
 - **Security checks**: watching network responses for leaked quiz answers, calling APIs as non-members,
   checking that private items return 404, checking headers.
-- Test accounts use `@example.com` emails and are deleted afterwards.
 
-| Suite | Checks |
+| Suite file | Checks |
 |---|---|
-| Communities | 23 |
-| Posts | 23 |
-| Discussion | 20 |
-| Voice notes | 17 |
-| Quizzes | 19 |
-| XP / profiles / leaderboard | 13 |
-| Moderation | 15 |
-| Live battles | 19 |
-| Study rooms | 16 |
-| Notifications + PWA | 15 |
-| **Total** | **180+** |
+| `communities.test.mjs` | 23 |
+| `posts.test.mjs` | 23 |
+| `discussion.test.mjs` | 20 |
+| `voice-notes.test.mjs` | 17 |
+| `quizzes.test.mjs` | 19 |
+| `xp-profiles.test.mjs` | 13 |
+| `moderation.test.mjs` | 15 |
+| `battles.test.mjs` | 19 |
+| `study-rooms.test.mjs` | 16 |
+| `notifications-pwa.test.mjs` | 15 |
+| `post-media-cleanup.test.mjs` | 1 |
+| **Total** | **181** |
 
-> ⚠️ **Gap:** these test scripts were run from a scratch folder and are **not yet in the repository**. Next
-> step: add them under `web/tests/e2e/` with an `npm run test:e2e` command so they can be re-run before every
-> release.
+Known flaky check: "video title auto-filled from YouTube" depends on YouTube's oEmbed service responding
+within 5 seconds.
 
 ### Bugs found by testing (and their lessons)
 | Bug | Lesson |
@@ -402,7 +418,7 @@ Hosted Postgres note: `LISTEN/NOTIFY` needs a **direct (non-pooled)** connection
 - [ ] Automated daily database backups + a tested restore
 - [ ] Error monitoring (e.g. Sentry free tier) and uptime check
 - [ ] `BETTER_AUTH_URL` set to the real domain; strong `BETTER_AUTH_SECRET`
-- [ ] E2E tests in the repo and passing
+- [ ] `npm run test:e2e` passing
 
 ### Release steps (per feature, today)
 1. Build the feature → definition of done (section 6).
@@ -426,7 +442,6 @@ Hosted Postgres note: `LISTEN/NOTIFY` needs a **direct (non-pooled)** connection
 Passwords are stored as one-way hashes — they can be reset, never read.
 
 ### Known limitations / technical debt
-- E2E tests not yet in the repo (see section 6).
 - No editing of posts or messages (delete and re-share).
 - No transfer of community ownership; owners can't leave.
 - Removed members keep receiving live chat updates until they reload (they can't send).

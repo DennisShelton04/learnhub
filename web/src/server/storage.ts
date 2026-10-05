@@ -6,9 +6,10 @@ import { Readable } from "node:stream";
 /**
  * File storage on local disk. Keys look like "voice/<uuid>.webm".
  * Swap this module for S3 / Cloudflare R2 in production; callers only use these functions.
+ * The turbopackIgnore hints stop the build from tracing the whole project for these runtime paths.
  */
 
-const root = path.resolve(process.env.STORAGE_LOCAL_DIR ?? "./uploads");
+const root = path.resolve(/*turbopackIgnore: true*/ process.env.STORAGE_LOCAL_DIR ?? "./uploads");
 
 function resolveKey(key: string) {
   const full = path.resolve(root, key);
@@ -28,10 +29,10 @@ export async function deleteFile(key: string) {
 }
 
 export async function fileSize(key: string) {
-  return (await stat(resolveKey(key))).size;
+  return (await stat(/*turbopackIgnore: true*/ resolveKey(key))).size;
 }
 
 /** Opens a file, or an inclusive byte range of it, as a web stream. */
 export function readFile(key: string, range?: { start: number; end: number }) {
-  return Readable.toWeb(createReadStream(resolveKey(key), range)) as ReadableStream<Uint8Array>;
+  return Readable.toWeb(createReadStream(/*turbopackIgnore: true*/ resolveKey(key), range)) as ReadableStream<Uint8Array>;
 }

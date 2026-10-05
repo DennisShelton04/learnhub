@@ -70,6 +70,16 @@ This builds the app, opens a free Cloudflare quick tunnel, and prints an `https:
 anyone can open. Logins are configured for that link automatically. The link changes every time you run it,
 and the app is only reachable while the command is running and your Mac is awake.
 
+## Tests
+
+```bash
+cd web
+npm run test:e2e
+```
+
+Builds the app, starts a test server on port 3100, runs the browser end-to-end suites in `web/tests/e2e/`
+with your installed Google Chrome, and deletes the test accounts afterwards. See `docs/SDLC.md` § 6.
+
 ## How it fits together
 
 - **Pages and mutations:** React Server Components + Server Actions (`web/src/server/*-actions.ts`).

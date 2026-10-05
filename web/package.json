@@ -11,7 +11,8 @@
     "db:migrate": "drizzle-kit migrate",
     "db:studio": "drizzle-kit studio",
     "share": "next build && node scripts/share.mjs",
-    "reset-password": "node scripts/reset-password.mjs"
+    "reset-password": "node scripts/reset-password.mjs",
+    "test:e2e": "next build && node tests/e2e/run.mjs"
   },
   "dependencies": {
     "better-auth": "^1.7.7",
@@ -33,6 +34,7 @@
     "drizzle-kit": "^0.31.11",
     "eslint": "^9",
     "eslint-config-next": "16.3.8",
+    "playwright-core": "^1.63.0",
     "tailwindcss": "^4",
     "typescript": "^5"
   }

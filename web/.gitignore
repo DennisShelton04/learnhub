@@ -43,3 +43,6 @@ next-env.d.ts
 
 # local file storage (voice notes)
 /uploads
+
+# e2e test screenshots
+/tests/e2e/output
