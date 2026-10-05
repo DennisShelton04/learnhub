@@ -8,8 +8,10 @@ import { db } from "@/db";
 import { post } from "@/db/schema/posts";
 import { requireUser } from "@/lib/session";
 import { getCommunityBySlug, getMembership } from "@/server/communities";
+import { deletePostWithMedia } from "@/server/moderation";
 import { fetchArticlePreview, fetchYouTubePreview, parseYouTubeId } from "@/server/link-preview";
 import { canDeletePost } from "@/server/posts";
+import { awardXp } from "@/server/xp";
 
 function isHttpUrl(value: string) {
   try {
@@ -90,6 +92,7 @@ export async function createPost(communitySlug: string, _prev: CreatePostState, 
   }
 
   const [created] = await db.insert(post).values(values).returning({ id: post.id });
+  await awardXp({ userId: user.id, communityId: target.id, kind: "post_shared", refId: created.id });
   revalidatePath(`/c/${communitySlug}`, "layout");
   redirect(`/c/${communitySlug}/p/${created.id}`);
 }
@@ -106,7 +109,7 @@ export async function deletePost(postId: string) {
     throw new Error("You don't have permission to delete this post.");
   }
 
-  await db.delete(post).where(eq(post.id, postId));
+  await deletePostWithMedia(postId);
   revalidatePath(`/c/${parent!.slug}`, "layout");
   redirect(`/c/${parent!.slug}`);
 }

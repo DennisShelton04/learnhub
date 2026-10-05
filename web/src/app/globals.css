@@ -1,26 +1,85 @@
 @import "tailwindcss";
 
+/* Discord-style surfaces. Light by default, dark when the device prefers it. */
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
-}
-
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  color-scheme: light dark;
+  --rail: #e3e5e8;
+  --sidebar: #f2f3f5;
+  --main: #ffffff;
+  --elevated: #ffffff;
+  --input: #ebedef;
+  --hover: rgb(116 127 141 / 0.12);
+  --selected: rgb(116 127 141 / 0.24);
+  --border: rgb(0 0 0 / 0.08);
+  --fg: #2e3338;
+  --muted: #5c6370;
+  --subtle: #80848e;
+  --accent: #5865f2;
+  --accent-hover: #4752c4;
+  --accent-soft: rgb(88 101 242 / 0.1);
+  --danger: #da373c;
+  --success: #23a55a;
 }
 
 @media (prefers-color-scheme: dark) {
   :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+    --rail: #1e1f22;
+    --sidebar: #2b2d31;
+    --main: #313338;
+    --elevated: #232428;
+    --input: #383a40;
+    --hover: rgb(78 80 88 / 0.3);
+    --selected: rgb(78 80 88 / 0.6);
+    --border: rgb(255 255 255 / 0.06);
+    --fg: #dbdee1;
+    --muted: #b5bac1;
+    --subtle: #949ba4;
+    --accent-soft: rgb(88 101 242 / 0.16);
+    --danger: #f23f43;
   }
 }
 
+@theme inline {
+  --color-rail: var(--rail);
+  --color-sidebar: var(--sidebar);
+  --color-main: var(--main);
+  --color-elevated: var(--elevated);
+  --color-input: var(--input);
+  --color-hover: var(--hover);
+  --color-selected: var(--selected);
+  --color-line: var(--border);
+  --color-fg: var(--fg);
+  --color-muted: var(--muted);
+  --color-subtle: var(--subtle);
+  --color-accent: var(--accent);
+  --color-accent-hover: var(--accent-hover);
+  --color-accent-soft: var(--accent-soft);
+  --color-danger: var(--danger);
+  --color-success: var(--success);
+  --font-sans: var(--font-geist-sans);
+  --font-mono: var(--font-geist-mono);
+}
+
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  background: var(--main);
+  color: var(--fg);
+  font-family: var(--font-sans), system-ui, sans-serif;
+}
+
+/* Thin scrollbars inside the app panes. */
+.scroll-thin {
+  scrollbar-width: thin;
+  scrollbar-color: var(--selected) transparent;
+}
+
+@keyframes highlight {
+  from {
+    background-color: var(--accent-soft);
+  }
+  to {
+    background-color: transparent;
+  }
+}
+.flash {
+  animation: highlight 1.6s ease-out;
 }

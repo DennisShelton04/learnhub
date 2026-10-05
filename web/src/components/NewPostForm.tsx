@@ -4,7 +4,7 @@ import { useActionState, useState } from "react";
 import { buttonStyles, inputStyles } from "@/components/styles";
 import { createPost, type CreatePostState } from "@/server/post-actions";
 
-type PostType = "video" | "article" | "note";
+export type PostType = "video" | "article" | "note";
 
 const types: { value: PostType; label: string; hint: string }[] = [
   { value: "video", label: "Video", hint: "Paste a YouTube link" },
@@ -12,13 +12,13 @@ const types: { value: PostType; label: string; hint: string }[] = [
   { value: "note", label: "Note", hint: "Write your own explanation or question" },
 ];
 
-export function NewPostForm({ communitySlug }: { communitySlug: string }) {
+export function NewPostForm({ communitySlug, initialType }: { communitySlug: string; initialType: PostType }) {
   const [state, action, pending] = useActionState<CreatePostState, FormData>(
     createPost.bind(null, communitySlug),
     {},
   );
   const values = state.values ?? {};
-  const [type, setType] = useState<PostType>((values.type as PostType) || "video");
+  const [type, setType] = useState<PostType>((values.type as PostType) || initialType);
   const isLink = type !== "note";
 
   return (
@@ -39,15 +39,15 @@ export function NewPostForm({ communitySlug }: { communitySlug: string }) {
               onClick={() => setType(t.value)}
               className={`rounded-md border px-3 py-2 text-center text-sm font-medium ${
                 type === t.value
-                  ? "border-zinc-900 bg-zinc-900 text-white dark:border-zinc-100 dark:bg-zinc-100 dark:text-zinc-900"
-                  : "border-zinc-300 hover:bg-zinc-100 dark:border-zinc-700 dark:hover:bg-zinc-900"
+                  ? "border-accent bg-accent text-white"
+                  : "border-line bg-sidebar hover:bg-hover"
               }`}
             >
               {t.label}
             </button>
           ))}
         </div>
-        <p className="text-sm text-zinc-500">{types.find((t) => t.value === type)!.hint}</p>
+        <p className="text-sm text-subtle">{types.find((t) => t.value === type)!.hint}</p>
       </div>
 
       {isLink && (
@@ -67,7 +67,7 @@ export function NewPostForm({ communitySlug }: { communitySlug: string }) {
 
       <label className="flex flex-col gap-1 text-sm font-medium">
         <span>
-          Title {isLink && <span className="font-normal text-zinc-500">(optional — we&apos;ll use the page title)</span>}
+          Title {isLink && <span className="font-normal text-subtle">(optional — we&apos;ll use the page title)</span>}
         </span>
         <input name="title" required={!isLink} maxLength={200} defaultValue={values.title} className={inputStyles} />
       </label>
@@ -75,7 +75,7 @@ export function NewPostForm({ communitySlug }: { communitySlug: string }) {
       <label className="flex flex-col gap-1 text-sm font-medium">
         <span>
           {isLink ? "Why is this worth learning from?" : "Your note"}{" "}
-          {isLink && <span className="font-normal text-zinc-500">(optional)</span>}
+          {isLink && <span className="font-normal text-subtle">(optional)</span>}
         </span>
         <textarea
           name="body"
@@ -88,7 +88,7 @@ export function NewPostForm({ communitySlug }: { communitySlug: string }) {
       </label>
 
       {state.error && (
-        <p role="alert" className="rounded-md bg-red-50 px-3 py-2 text-sm text-red-700 dark:bg-red-950 dark:text-red-300">
+        <p role="alert" className="rounded-md bg-danger/10 px-3 py-2 text-sm text-danger">
           {state.error}
         </p>
       )}

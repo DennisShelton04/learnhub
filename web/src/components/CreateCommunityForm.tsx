@@ -16,7 +16,7 @@ export function CreateCommunityForm() {
       </label>
 
       <label className="flex flex-col gap-1 text-sm font-medium">
-        Description <span className="font-normal text-zinc-500">(optional)</span>
+        Description <span className="font-normal text-subtle">(optional)</span>
         <textarea name="description" maxLength={500} rows={4} defaultValue={values.description} className={inputStyles} placeholder="What will members learn and discuss here?" />
       </label>
 
@@ -37,7 +37,7 @@ export function CreateCommunityForm() {
       </fieldset>
 
       {state.error && (
-        <p role="alert" className="rounded-md bg-red-50 px-3 py-2 text-sm text-red-700 dark:bg-red-950 dark:text-red-300">
+        <p role="alert" className="rounded-md bg-danger/10 px-3 py-2 text-sm text-danger">
           {state.error}
         </p>
       )}

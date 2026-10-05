@@ -1,5 +1,6 @@
 import { and, count, desc, eq, ilike } from "drizzle-orm";
 import { notFound } from "next/navigation";
+import { cache } from "react";
 import { db } from "@/db";
 import { user } from "@/db/schema/auth";
 import { community, communityMember } from "@/db/schema/communities";
@@ -31,7 +32,7 @@ export async function listPublicCommunities(search?: string) {
     .limit(50);
 }
 
-export async function listUserCommunities(userId: string) {
+export const listUserCommunities = cache(async (userId: string) => {
   return db
     .select({
       id: community.id,
@@ -45,7 +46,7 @@ export async function listUserCommunities(userId: string) {
     .innerJoin(community, eq(community.id, communityMember.communityId))
     .where(eq(communityMember.userId, userId))
     .orderBy(desc(communityMember.joinedAt));
-}
+});
 
 export async function getCommunityBySlug(slug: string) {
   return db.query.community.findFirst({ where: eq(community.slug, slug) });
@@ -56,13 +57,13 @@ export async function getCommunityByInviteCode(code: string) {
 }
 
 /** Loads a community the viewer may see; 404s if missing or private to them. */
-export async function getCommunityForViewer(slug: string, userId: string) {
+export const getCommunityForViewer = cache(async (slug: string, userId: string) => {
   const found = await getCommunityBySlug(slug);
   if (!found) notFound();
   const membership = await getMembership(found.id, userId);
   if (found.visibility === "private" && !membership) notFound();
   return { community: found, role: membership?.role };
-}
+});
 
 export async function countMembers(communityId: string) {
   const [row] = await db.select({ n: count() }).from(communityMember).where(eq(communityMember.communityId, communityId));

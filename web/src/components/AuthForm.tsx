@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState, useSyncExternalStore } from "react";
+import { buttonStyles, inputStyles } from "@/components/styles";
 import { authClient } from "@/lib/auth-client";
 import { safeNext } from "@/lib/safe-next";
 
@@ -47,7 +48,7 @@ export function AuthForm({ mode, next }: { mode: Mode; next?: string }) {
   // method="post": if submitted before JS loads, never put credentials in the URL.
   return (
     <form method="post" onSubmit={onSubmit} className="flex w-full flex-col gap-4">
-      <h1 className="text-2xl font-semibold tracking-tight">
+      <h1 className="text-center text-2xl font-bold">
         {isSignup ? "Create your account" : "Welcome back"}
       </h1>
 
@@ -62,7 +63,7 @@ export function AuthForm({ mode, next }: { mode: Mode; next?: string }) {
       />
 
       {error && (
-        <p role="alert" className="rounded-md bg-red-50 px-3 py-2 text-sm text-red-700 dark:bg-red-950 dark:text-red-300">
+        <p role="alert" className="rounded-md bg-danger/10 px-3 py-2 text-sm text-danger">
           {error}
         </p>
       )}
@@ -70,14 +71,14 @@ export function AuthForm({ mode, next }: { mode: Mode; next?: string }) {
       <button
         type="submit"
         disabled={pending || !hydrated}
-        className="rounded-md bg-zinc-900 px-4 py-2 font-medium text-white hover:bg-zinc-700 disabled:opacity-60 dark:bg-zinc-100 dark:text-zinc-900 dark:hover:bg-zinc-300"
+        className={`${buttonStyles.primary} py-2.5`}
       >
         {pending ? "Please wait…" : isSignup ? "Sign up" : "Log in"}
       </button>
 
-      <p className="text-sm text-zinc-600 dark:text-zinc-400">
+      <p className="text-sm text-muted">
         {isSignup ? "Already have an account? " : "New to LearnHub? "}
-        <Link href={otherHref} className="font-medium underline">
+        <Link href={otherHref} className="font-medium text-accent hover:underline">
           {isSignup ? "Log in" : "Create an account"}
         </Link>
       </p>
@@ -87,12 +88,12 @@ export function AuthForm({ mode, next }: { mode: Mode; next?: string }) {
 
 function Field({ label, ...props }: { label: string } & React.InputHTMLAttributes<HTMLInputElement>) {
   return (
-    <label className="flex flex-col gap-1 text-sm font-medium">
+    <label className="flex flex-col gap-1.5 text-xs font-bold uppercase tracking-wide text-muted">
       {label}
       <input
         required
         {...props}
-        className="rounded-md border border-zinc-300 bg-transparent px-3 py-2 text-base font-normal outline-none focus:border-zinc-900 dark:border-zinc-700 dark:focus:border-zinc-100"
+        className={`${inputStyles} font-normal`}
       />
     </label>
   );

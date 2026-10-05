@@ -1,15 +1,18 @@
 /* eslint-disable @next/next/no-img-element -- preview images come from arbitrary sites */
+import { FileText, MessageSquare, StickyNote, Video } from "lucide-react";
 import Link from "next/link";
 import { timeAgo } from "@/lib/format";
 import type { PostWithAuthor } from "@/server/posts";
 
 export const postTypeLabel = { video: "Video", article: "Article", note: "Note" } as const;
+export const postTypeIcon = { video: Video, article: FileText, note: StickyNote } as const;
 
 export function PostCard({ post, communitySlug }: { post: PostWithAuthor; communitySlug: string }) {
+  const Icon = postTypeIcon[post.type];
   return (
     <Link
       href={`/c/${communitySlug}/p/${post.id}`}
-      className="flex gap-4 rounded-lg border border-zinc-200 p-4 hover:border-zinc-400 dark:border-zinc-800 dark:hover:border-zinc-600"
+      className="flex gap-4 rounded-lg bg-sidebar p-3 transition-colors hover:bg-selected"
     >
       {post.previewImage && (
         <img
@@ -17,18 +20,26 @@ export function PostCard({ post, communitySlug }: { post: PostWithAuthor; commun
           alt=""
           loading="lazy"
           referrerPolicy="no-referrer"
-          className="aspect-video w-28 shrink-0 rounded-md bg-zinc-100 object-cover sm:w-40 dark:bg-zinc-800"
+          className="aspect-video w-28 shrink-0 rounded-md bg-input object-cover sm:w-40"
         />
       )}
       <div className="flex min-w-0 flex-col gap-1">
-        <p className="text-xs font-medium uppercase tracking-wide text-zinc-500">
+        <p className="flex items-center gap-1 text-xs font-medium uppercase tracking-wide text-subtle">
+          <Icon className="h-3.5 w-3.5" />
           {postTypeLabel[post.type]}
           {post.previewSiteName && post.type !== "note" && ` · ${post.previewSiteName}`}
         </p>
         <h3 className="line-clamp-2 font-semibold">{post.title}</h3>
-        {post.type === "note" && <p className="line-clamp-2 text-sm text-zinc-600 dark:text-zinc-400">{post.body}</p>}
-        <p className="mt-auto text-xs text-zinc-500">
+        {post.type === "note" && <p className="line-clamp-2 text-sm text-muted">{post.body}</p>}
+        <p className="mt-auto flex items-center gap-1 text-xs text-subtle">
           {post.authorName} · {timeAgo(post.createdAt)}
+          {post.messageCount > 0 && (
+            <>
+              {" · "}
+              <MessageSquare className="h-3 w-3" />
+              {`${post.messageCount} ${post.messageCount === 1 ? "message" : "messages"}`}
+            </>
+          )}
         </p>
       </div>
     </Link>

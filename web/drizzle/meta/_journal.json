@@ -29,6 +29,62 @@
       "when": 1790996661343,
       "tag": "0003_timestamps_with_timezone",
       "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1791025835760,
+      "tag": "0004_messages",
+      "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "7",
+      "when": 1791108298124,
+      "tag": "0005_voice_notes",
+      "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1791108537198,
+      "tag": "0006_quizzes",
+      "breakpoints": true
+    },
+    {
+      "idx": 7,
+      "version": "7",
+      "when": 1791108862825,
+      "tag": "0007_xp",
+      "breakpoints": true
+    },
+    {
+      "idx": 8,
+      "version": "7",
+      "when": 1791109120596,
+      "tag": "0008_reports",
+      "breakpoints": true
+    },
+    {
+      "idx": 9,
+      "version": "7",
+      "when": 1791109430692,
+      "tag": "0009_battles",
+      "breakpoints": true
+    },
+    {
+      "idx": 10,
+      "version": "7",
+      "when": 1791109914195,
+      "tag": "0010_study_rooms",
+      "breakpoints": true
+    },
+    {
+      "idx": 11,
+      "version": "7",
+      "when": 1791110350974,
+      "tag": "0011_notifications",
+      "breakpoints": true
     }
   ]
 }

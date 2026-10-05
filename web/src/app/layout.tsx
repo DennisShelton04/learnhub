@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 
@@ -15,6 +15,17 @@ const geistMono = Geist_Mono({
 export const metadata: Metadata = {
   title: "LearnHub",
   description: "Community learning with discussions and quizzes",
+  applicationName: "LearnHub",
+  // iOS "Add to Home Screen" support.
+  appleWebApp: { capable: true, title: "LearnHub", statusBarStyle: "default" },
+  icons: { icon: "/icon-192.png", apple: "/apple-touch-icon.png" },
+};
+
+export const viewport: Viewport = {
+  themeColor: [
+    { media: "(prefers-color-scheme: light)", color: "#ffffff" },
+    { media: "(prefers-color-scheme: dark)", color: "#313338" },
+  ],
 };
 
 export default function RootLayout({ children }: LayoutProps<"/">) {

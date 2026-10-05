@@ -1,5 +1,6 @@
 "use client";
 
+import { LogOut } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { authClient } from "@/lib/auth-client";
 
@@ -14,10 +15,13 @@ export function SignOutButton() {
 
   return (
     <button
+      type="button"
       onClick={signOut}
-      className="rounded-md border border-zinc-300 px-3 py-1.5 text-sm hover:bg-zinc-100 dark:border-zinc-700 dark:hover:bg-zinc-900"
+      aria-label="Log out"
+      title="Log out"
+      className="rounded p-1.5 text-muted hover:bg-hover hover:text-fg"
     >
-      Log out
+      <LogOut className="h-4 w-4" />
     </button>
   );
 }

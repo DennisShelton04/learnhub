@@ -15,3 +15,20 @@ export function timeAgo(date: Date) {
   }
   return "just now";
 }
+
+const timeFmt = new Intl.DateTimeFormat(undefined, { hour: "numeric", minute: "2-digit" });
+const dateFmt = new Intl.DateTimeFormat(undefined, { day: "numeric", month: "short", year: "numeric" });
+
+/** Discord-style timestamp: "Today at 10:32", "Yesterday at 18:05", or a date. */
+export function messageTime(date: Date) {
+  const today = new Date();
+  const yesterday = new Date(today);
+  yesterday.setDate(today.getDate() - 1);
+  if (date.toDateString() === today.toDateString()) return `Today at ${timeFmt.format(date)}`;
+  if (date.toDateString() === yesterday.toDateString()) return `Yesterday at ${timeFmt.format(date)}`;
+  return `${dateFmt.format(date)} ${timeFmt.format(date)}`;
+}
+
+export function shortTime(date: Date) {
+  return timeFmt.format(date);
+}

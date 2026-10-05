@@ -1,25 +1,34 @@
+import { Plus } from "lucide-react";
 import type { Metadata } from "next";
-import Link from "next/link";
 import { redirect } from "next/navigation";
-import { NewPostForm } from "@/components/NewPostForm";
+import { NewPostForm, type PostType } from "@/components/NewPostForm";
+import { PageBody } from "@/components/shell/AppNav";
+import { ChannelHeader } from "@/components/shell/ChannelHeader";
 import { requireUser } from "@/lib/session";
 import { getCommunityForViewer } from "@/server/communities";
 
 export const metadata: Metadata = { title: "Share · LearnHub" };
 
-export default async function NewPostPage({ params }: { params: Promise<{ slug: string }> }) {
+const postTypes: PostType[] = ["video", "article", "note"];
+
+export default async function NewPostPage({ params, searchParams }: PageProps<"/c/[slug]/new">) {
   const { slug } = await params;
+  const { type } = await searchParams;
   const user = await requireUser();
   const { community, role } = await getCommunityForViewer(slug, user.id);
   if (!role) redirect(`/c/${slug}`);
+  const initialType = postTypes.find((t) => t === type) ?? "video";
 
   return (
-    <div className="flex max-w-xl flex-col gap-6">
-      <Link href={`/c/${slug}`} className="text-sm text-zinc-500 hover:text-zinc-900 dark:hover:text-zinc-100">
-        ← {community.name}
-      </Link>
-      <h1 className="text-3xl font-semibold tracking-tight">Share something</h1>
-      <NewPostForm communitySlug={slug} />
-    </div>
+    <>
+      <ChannelHeader icon={<Plus className="h-5 w-5" />} title="Share something" />
+      <PageBody width="max-w-xl">
+        <div>
+          <h2 className="text-2xl font-bold">Share with {community.name}</h2>
+          <p className="mt-1 text-muted">Everything you share gets its own channel for discussion.</p>
+        </div>
+        <NewPostForm communitySlug={slug} initialType={initialType} />
+      </PageBody>
+    </>
   );
 }
