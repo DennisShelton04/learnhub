@@ -9,6 +9,8 @@ learnhub/
 
 Runs fully locally, no Docker and no paid services required.
 
+Project intent, plans, architecture, decisions and the release checklist live in [`docs/SDLC.md`](docs/SDLC.md).
+
 ## Features
 
 | Area | What it does |
