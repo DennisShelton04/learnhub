@@ -9,7 +9,9 @@
     "lint": "eslint",
     "db:generate": "drizzle-kit generate",
     "db:migrate": "drizzle-kit migrate",
-    "db:studio": "drizzle-kit studio"
+    "db:studio": "drizzle-kit studio",
+    "share": "next build && node scripts/share.mjs",
+    "reset-password": "node scripts/reset-password.mjs"
   },
   "dependencies": {
     "better-auth": "^1.7.7",

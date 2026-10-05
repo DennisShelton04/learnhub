@@ -56,6 +56,18 @@ Open http://localhost:3000.
 > The microphone (voice notes, study rooms) only works on `localhost` or HTTPS. To test on a phone over your
 > Wi-Fi, run `npx next dev --experimental-https` and open the HTTPS address it prints.
 
+## Share for testing (from your own machine)
+
+```bash
+brew install cloudflared   # once
+cd web
+npm run share
+```
+
+This builds the app, opens a free Cloudflare quick tunnel, and prints an `https://….trycloudflare.com` link
+anyone can open. Logins are configured for that link automatically. The link changes every time you run it,
+and the app is only reachable while the command is running and your Mac is awake.
+
 ## How it fits together
 
 - **Pages and mutations:** React Server Components + Server Actions (`web/src/server/*-actions.ts`).
