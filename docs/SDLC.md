@@ -89,7 +89,7 @@ discussion · study rooms and battles per community per week.
 |---|---|---|---|
 | Spam / abuse when opened to the public | High | High | Add per-user rate limits before launch; reporting + moderation already exist |
 | Study-room voice fails on strict networks | Medium | Medium | Add a TURN relay (free tiers from Cloudflare or Metered) |
-| Quick tunnel limitations (URL changes each run, ~200 concurrent requests, possible SSE issues) | Medium | Medium | Fine for testing; use a named tunnel, ngrok or real hosting for anything longer-lived |
+| Quick tunnel limitations (URL changes each run, ~200 concurrent requests, buffers SSE) | Medium | Medium | Live updates fall back to long polling automatically; use a named tunnel, ngrok or real hosting for anything longer-lived |
 | Data loss (everything lives on one laptop) | Medium | High | Regular `pg_dump` backups (see [operations](#8-operations-and-maintenance)); move to hosted Postgres at launch |
 | Employer policy on side projects / public repo from a work laptop | Unknown | High | Confirm with the employer before publishing or launching |
 | YouTube oEmbed is slow/unavailable | Low | Low | Already handled: falls back to the title "YouTube video" |
@@ -127,6 +127,7 @@ discussion · study rooms and battles per community per week.
 | Privacy | Emails are never shown to other users | Profiles show name, XP, badges and only communities the viewer may see |
 | Privacy | Private communities are invisible to non-members | `getCommunityForViewer` / `get*Access` return 404 |
 | Realtime | Updates arrive within ~1 s and survive reconnects | SSE + Postgres LISTEN/NOTIFY; clients refetch on every `ready` event |
+| Realtime | Works behind proxies that buffer streams (e.g. the sharing tunnel) | `src/lib/live.ts` falls back to long polling the same routes if SSE isn't ready within 4 s |
 | Fairness | XP can't be farmed | Daily caps per activity; quiz XP only on first completion |
 | Accessibility | Keyboard and screen-reader friendly | Labelled controls, `aria-live` regions, focusable hidden toolbars, colour + shape for battle answers |
 | Theming | Matches the device | CSS tokens in `globals.css` with a `prefers-color-scheme` dark set |
@@ -176,6 +177,11 @@ discussion · study rooms and battles per community per week.
    SSE stream subscribed to `post:<id>`.
 4. Clients add it to the list. On every (re)connect the stream sends `ready`, and clients refetch to catch
    anything missed.
+5. **Fallback:** some proxies (Cloudflare quick tunnels, some corporate proxies) hold SSE responses back.
+   `subscribeLive()` in `src/lib/live.ts` waits 4 s for `ready`, then switches to long polling the same URL
+   with `?poll&after=<cursor>`. The server (`pollHub` in `realtime.ts`) keeps a short numbered history per
+   topic and answers immediately or after the next event (max 25 s). Features that send messages right
+   away (study rooms) must wait until the subscription is live.
 
 Topics: `post:<id>` (chat), `battle:<id>`, `room:<postId>` (presence, playback, WebRTC signals — signals are
 filtered so only the addressee receives them), `user:<id>` (notifications).
@@ -366,7 +372,11 @@ What they cover:
 | `study-rooms.test.mjs` | 16 |
 | `notifications-pwa.test.mjs` | 15 |
 | `post-media-cleanup.test.mjs` | 1 |
-| **Total** | **181** |
+| `live-through-proxy.test.mjs` | 4 |
+| **Total** | **185** |
+
+`live-through-proxy.test.mjs` runs the app through `buffering-proxy.mjs`, a local proxy that holds SSE
+responses back like a Cloudflare quick tunnel, to prove live features still work when SSE can't.
 
 Known flaky check: "video title auto-filled from YouTube" depends on YouTube's oEmbed service responding
 within 5 seconds.
@@ -383,6 +393,7 @@ within 5 seconds.
 | Battle question never closed when time ran out | Client must retry after the server's grace period |
 | Sidebar didn't show new battles; bell didn't clear | Revalidate the layout, or push a realtime event |
 | Deleting a post left voice files on disk | Delete media explicitly; DB cascades don't touch files |
+| Through the share link (quick tunnel) nothing was live and study-room voice stayed "connecting" | Proxies can buffer SSE: fall back to long polling, and don't send WebRTC signals before the subscription is live. Test through a buffering proxy |
 
 ---
 
@@ -472,6 +483,7 @@ Short records of important decisions. Add a new row instead of editing old ones.
 | 11 | 2026-10-04 | XP as idempotent events with daily caps | Fair, auditable, can't be farmed | Counter column on the user |
 | 12 | 2026-10-05 | Internal testing via Cloudflare quick tunnel from the developer's Mac | Free, HTTPS (needed for the mic), already used by the team | Paid hosting now; LAN-only |
 | 13 | 2026-10-05 | Not public yet; public-launch items deferred | Internal testing first | Launch immediately |
+| 14 | 2026-10-06 | Long-polling fallback for live updates when SSE is buffered | Quick tunnels (and some proxies) hold SSE back, breaking every live feature for testers | Only support named tunnels / ngrok; WebSockets (also blocked by some proxies) |
 
 ---
 

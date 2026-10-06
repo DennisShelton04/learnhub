@@ -56,7 +56,8 @@ if (!baseUrl) {
   server = spawn("npx", ["next", "start", "-p", port], {
     cwd: webDir,
     stdio: ["ignore", "ignore", "inherit"],
-    env: { ...process.env, BETTER_AUTH_URL: baseUrl, BETTER_AUTH_TRUSTED_ORIGINS: "" },
+    // The proxy suite reaches the server through a second origin.
+    env: { ...process.env, BETTER_AUTH_URL: baseUrl, BETTER_AUTH_TRUSTED_ORIGINS: `http://localhost:${process.env.E2E_PROXY_PORT ?? "3101"}` },
   });
   console.log(`Starting test server at ${baseUrl}…`);
   await waitFor(baseUrl);

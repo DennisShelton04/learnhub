@@ -113,3 +113,88 @@ export const postTopic = (postId: string) => `post:${postId}`;
 export const battleTopic = (battleId: string) => `battle:${battleId}`;
 export const roomTopic = (postId: string) => `room:${postId}`;
 export const userTopic = (userId: string) => `user:${userId}`;
+
+/**
+ * Long-polling fallback for clients behind proxies that buffer Server-Sent Events
+ * (e.g. Cloudflare quick tunnels). Each polled topic keeps a short numbered history of its
+ * events; a poll returns everything after the client's cursor, or waits for the next event.
+ */
+const POLL_WAIT_MS = 25_000;
+const POLL_HISTORY = 200;
+const POLL_TOPIC_TTL_MS = 60_000;
+
+type TopicLog = {
+  seq: number;
+  events: { seq: number; event: RealtimeEvent }[];
+  waiters: Set<() => void>;
+  expiresAt: number;
+  unsubscribe: () => void;
+};
+
+export type PollResult = { cursor: number; events: RealtimeEvent[]; reset: boolean };
+
+class PollHub {
+  private logs = new Map<string, TopicLog>();
+
+  constructor() {
+    // Stop recording topics nobody has polled for a while.
+    setInterval(() => {
+      const now = Date.now();
+      for (const [topic, log] of this.logs) {
+        if (log.expiresAt < now && log.waiters.size === 0) {
+          log.unsubscribe();
+          this.logs.delete(topic);
+        }
+      }
+    }, POLL_TOPIC_TTL_MS).unref?.();
+  }
+
+  private logFor(topic: string) {
+    let log = this.logs.get(topic);
+    if (!log) {
+      const created: TopicLog = { seq: 0, events: [], waiters: new Set(), expiresAt: 0, unsubscribe: () => {} };
+      created.unsubscribe = realtime.subscribe(topic, (event) => {
+        created.seq++;
+        created.events.push({ seq: created.seq, event });
+        if (created.events.length > POLL_HISTORY) created.events.shift();
+        for (const wake of created.waiters) wake();
+      });
+      this.logs.set(topic, created);
+      log = created;
+    }
+    log.expiresAt = Date.now() + POLL_TOPIC_TTL_MS;
+    return log;
+  }
+
+  /**
+   * Events after `after` (filtered for this listener). Without a cursor, or if the history no longer
+   * reaches back that far (server restarted, too many events), returns `reset` so the client refetches.
+   */
+  async poll(topic: string, after: number | null, filter: (e: RealtimeEvent) => boolean, signal: AbortSignal): Promise<PollResult> {
+    const log = this.logFor(topic);
+    await realtime.ready();
+    const oldest = log.events[0]?.seq ?? log.seq + 1;
+    if (after === null || after > log.seq || after < oldest - 1) {
+      return { cursor: log.seq, events: [], reset: true };
+    }
+    if (log.seq === after) {
+      await new Promise<void>((resolve) => {
+        const done = () => {
+          clearTimeout(timer);
+          log.waiters.delete(done);
+          signal.removeEventListener("abort", done);
+          resolve();
+        };
+        const timer = setTimeout(done, POLL_WAIT_MS);
+        log.waiters.add(done);
+        signal.addEventListener("abort", done);
+      });
+    }
+    log.expiresAt = Date.now() + POLL_TOPIC_TTL_MS;
+    const events = log.events.filter((e) => e.seq > after).map((e) => e.event).filter(filter);
+    return { cursor: log.seq, events, reset: false };
+  }
+}
+
+const globalForPoll = globalThis as unknown as { pollHub?: PollHub };
+export const pollHub = (globalForPoll.pollHub ??= new PollHub());

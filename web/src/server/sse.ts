@@ -1,4 +1,4 @@
-import { type RealtimeEvent, realtime } from "@/server/realtime";
+import { pollHub, type RealtimeEvent, realtime } from "@/server/realtime";
 
 const HEARTBEAT_MS = 25_000;
 
@@ -52,4 +52,18 @@ export function sseResponse(request: Request, topic: string, filter?: (event: Re
       "X-Accel-Buffering": "no",
     },
   });
+}
+
+/**
+ * Serves a live topic either as an SSE stream or, when the client asks with `?poll`, as one
+ * long-poll response (`?poll&after=<cursor>`). Clients fall back to polling when a proxy
+ * buffers the stream.
+ */
+export async function realtimeResponse(request: Request, topic: string, filter: (event: RealtimeEvent) => boolean = () => true) {
+  const params = new URL(request.url).searchParams;
+  if (!params.has("poll")) return sseResponse(request, topic, filter);
+  const raw = params.get("after");
+  const after = raw !== null && /^\d+$/.test(raw) ? Number(raw) : null;
+  const result = await pollHub.poll(topic, after, filter, request.signal);
+  return Response.json(result, { headers: { "Cache-Control": "no-store" } });
 }

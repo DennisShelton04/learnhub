@@ -3,6 +3,7 @@
 import { Bell } from "lucide-react";
 import Link from "next/link";
 import { useCallback, useEffect, useState } from "react";
+import { subscribeLive } from "@/lib/live";
 
 export function NotificationBell({ initialUnread }: { initialUnread: number }) {
   const [unread, setUnread] = useState(initialUnread);
@@ -13,10 +14,10 @@ export function NotificationBell({ initialUnread }: { initialUnread: number }) {
   }, []);
 
   useEffect(() => {
-    const events = new EventSource("/api/notifications/events");
-    events.addEventListener("ready", refresh);
-    events.addEventListener("notifications.changed", refresh);
-    return () => events.close();
+    return subscribeLive("/api/notifications/events", {
+      types: ["notifications.changed"],
+      onEvent: () => void refresh(),
+    });
   }, [refresh]);
 
   return (

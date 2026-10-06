@@ -4,6 +4,7 @@ import { Crown, Headphones, LogOut, Mic, MicOff } from "lucide-react";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Avatar } from "@/components/Avatar";
 import { buttonStyles } from "@/components/styles";
+import { type LiveStatus, subscribeLive } from "@/lib/live";
 import type { RoomPlayback, RoomSignal } from "@/server/realtime";
 import type { RoomState } from "@/server/rooms";
 
@@ -21,6 +22,8 @@ export function StudyRoom({ postId, videoId, currentUserId }: { postId: string; 
   const [muted, setMuted] = useState(false);
   const [listenOnly, setListenOnly] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  // Joining sends WebRTC offers straight away, so wait until we can receive the answers.
+  const [liveStatus, setLiveStatus] = useState<LiveStatus>("connecting");
   const [connections, setConnections] = useState<Record<string, RTCPeerConnectionState>>({});
   const [streams, setStreams] = useState<Record<string, MediaStream>>({});
   const localStream = useRef<MediaStream | null>(null);
@@ -171,15 +174,20 @@ export function StudyRoom({ postId, videoId, currentUserId }: { postId: string; 
   // ---------- Presence, events, lifecycle ----------
 
   useEffect(() => {
-    const events = new EventSource(`/api/rooms/${postId}/events`);
-    events.addEventListener("ready", refresh);
-    events.addEventListener("room.updated", refresh);
-    events.addEventListener("room.playback", (e) => {
-      const pb = JSON.parse(e.data).data as RoomPlayback;
-      setRoom((r) => (r ? { ...r, playback: pb } : r));
+    return subscribeLive(`/api/rooms/${postId}/events`, {
+      types: ["room.updated", "room.playback", "room.signal"],
+      onStatus: setLiveStatus,
+      onEvent: (type, payload) => {
+        if (type === "ready" || type === "room.updated") {
+          void refresh();
+        } else if (type === "room.playback") {
+          const pb = (payload as { data: RoomPlayback }).data;
+          setRoom((r) => (r ? { ...r, playback: pb } : r));
+        } else if (type === "room.signal") {
+          void onSignal((payload as { data: RoomSignal }).data);
+        }
+      },
     });
-    events.addEventListener("room.signal", (e) => void onSignal(JSON.parse(e.data).data as RoomSignal));
-    return () => events.close();
   }, [postId, refresh, onSignal]);
 
   // Close connections to people who left.
@@ -296,8 +304,8 @@ export function StudyRoom({ postId, videoId, currentUserId }: { postId: string; 
                 </button>
               </>
             ) : (
-              <button onClick={join} disabled={joining} className={buttonStyles.primary}>
-                {joining ? "Joining…" : "Join study room"}
+              <button onClick={join} disabled={joining || liveStatus !== "live"} className={buttonStyles.primary}>
+                {liveStatus !== "live" ? "Connecting…" : joining ? "Joining…" : "Join study room"}
               </button>
             )}
           </div>

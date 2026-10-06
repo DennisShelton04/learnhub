@@ -6,6 +6,7 @@ import { Avatar } from "@/components/Avatar";
 import { ReportButton } from "@/components/ReportButton";
 import { formatDuration, MAX_RECORDING_MS, useVoiceRecorder, VoicePlayer } from "@/components/voice";
 import { messageTime, shortTime } from "@/lib/format";
+import { subscribeLive } from "@/lib/live";
 import { deleteMessage, sendMessage } from "@/server/message-actions";
 import type { ChatMessage } from "@/server/messages";
 
@@ -44,18 +45,21 @@ export function Discussion({ postId, postTitle, intro, initialMessages, currentU
   }, []);
 
   useEffect(() => {
-    const events = new EventSource(`/api/posts/${postId}/events`);
-    // "ready" fires on every (re)connect; refetch to catch anything sent while we weren't listening.
-    events.addEventListener("ready", async () => {
-      setStatus("live");
-      const res = await fetch(`/api/posts/${postId}/messages`);
-      if (res.ok) upsert(await res.json());
+    return subscribeLive(`/api/posts/${postId}/events`, {
+      types: ["message.created", "message.deleted"],
+      onStatus: setStatus,
+      onEvent: async (type, payload) => {
+        // "ready" fires on every (re)connect; refetch to catch anything sent while we weren't listening.
+        if (type === "ready") {
+          const res = await fetch(`/api/posts/${postId}/messages`);
+          if (res.ok) upsert(await res.json());
+        } else if (type === "message.created") {
+          upsert([(payload as { message: ChatMessage }).message]);
+        } else if (type === "message.deleted") {
+          markDeleted((payload as { messageId: string }).messageId);
+        }
+      },
     });
-    events.addEventListener("message.created", (e) => upsert([JSON.parse(e.data).message]));
-    events.addEventListener("message.deleted", (e) => markDeleted(JSON.parse(e.data).messageId));
-    // EventSource reconnects automatically.
-    events.onerror = () => setStatus("reconnecting");
-    return () => events.close();
   }, [postId, upsert, markDeleted]);
 
   const visible = messages.filter((m) => !m.deleted);

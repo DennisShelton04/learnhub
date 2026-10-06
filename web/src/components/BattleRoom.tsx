@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useCallback, useEffect, useRef, useState, useTransition } from "react";
 import { Avatar } from "@/components/Avatar";
 import { InviteLink } from "@/components/InviteLink";
+import { subscribeLive } from "@/lib/live";
 import { buttonStyles } from "@/components/styles";
 import { advanceBattle, answerBattle, expireQuestion, joinBattle } from "@/server/battle-actions";
 import type { BattleState } from "@/server/battles";
@@ -38,10 +39,10 @@ export function BattleRoom({ initial, slug, inviteUrl }: { initial: BattleState;
   }, [initial.id]);
 
   useEffect(() => {
-    const events = new EventSource(`/api/battles/${initial.id}/events`);
-    events.addEventListener("ready", refresh);
-    events.addEventListener("battle.updated", refresh);
-    return () => events.close();
+    return subscribeLive(`/api/battles/${initial.id}/events`, {
+      types: ["battle.updated"],
+      onEvent: () => void refresh(),
+    });
   }, [initial.id, refresh]);
 
   const run = (fn: () => Promise<{ error?: string } | void>) => {
